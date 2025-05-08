@@ -6,98 +6,140 @@ This project, undertaken within LifeArc, focuses on developing and optimizing an
 
 ## 2. Background
 
-Traditional pain research often relies on animal models or scarce primary human neurons. Direct reprogramming, or transdifferentiation, of easily accessible cells like fibroblasts into specific neuronal types offers a promising alternative. This project utilizes a method based on the ectopic expression of key neurogenic transcription factors (BRN3A and NGN1) delivered via lentiviral vectors, combined with specialized culture conditions, to drive this conversion.
+Traditional pain research often relies on animal models or scarce primary human neurons. Direct reprogramming, or transdifferentiation, of easily accessible cells like fibroblasts into specific neuronal types offers a promising alternative. This project utilizes a method based on the ectopic expression of key neurogenic transcription factors (initially planned as BRN3A and NGN1, but Task 2 focused on NGN2 optimization) delivered via lentiviral vectors, combined with specialized culture conditions, to drive this conversion.
 
-## 3. Current Task: Experimental Design (Task 1)
+## 3. Current Task (Task 1): Experimental Design
 
-This initial phase focuses specifically on **designing an experiment to optimize the fibroblast-to-sensory neuron differentiation protocol**. The objectives were:
+This initial phase focused specifically on **designing an experiment to optimize the fibroblast-to-sensory neuron differentiation protocol**. The objectives were:
 
 * Thoroughly analyze the baseline differentiation protocol provided.
-* Identify key parameters and reagents suitable for optimization (e.g., viral MOI, duration/concentration of doxycycline induction, composition/timing of media changes, growth factor concentrations).
+* Identify key parameters and reagents suitable for optimization (e.g., viral MOI for neurogenic factors, growth factor concentrations like NT3).
 * Define appropriate experimental conditions, including dose ranges for variables being tested.
-* Determine necessary positive and negative controls (e.g., uninfected cells, cells infected with control virus).
-* Structure the complete optimization experiment using the provided Excel template.
+* Determine necessary positive and negative controls.
+* Structure the complete optimization experiment.
 
-## 4. Methodology Employed
+## 4. Methodology Employed (Initial Plan)
 
 The core differentiation protocol involves:
 
-* **Lentiviral Transduction:** Using pre-prepared lentiviruses to deliver BRN3A and NGN1 genes under the control of a doxycycline-inducible promoter (Tet-On system). A control virus (empty vector) is used for comparison.
-* **Fibroblast Infection:** Infecting human fibroblasts (cultured in DMEM + 10% FBS) with the lentiviral particles at a target Multiplicity of Infection (MOI).
-* **Induction:** Inducing transcription factor expression using doxycycline.
-* **Culture & Differentiation:** Sequentially culturing the cells in specialized media (N3 medium, followed by DMEM/F12:Neurobasal mix supplemented with B27, NGF, BDNF, GDNF) to support neuronal differentiation and survival.
-* **Optimization Design:** Systematically varying selected parameters across different experimental wells, as documented in the `Experiment design template (1).xlsx`.
+* **Lentiviral Transduction:** Using pre-prepared lentiviruses to deliver neurogenic genes (e.g., NGN2) under the control of a doxycycline-inducible promoter.
+* **Fibroblast Infection:** Infecting human fibroblasts with the lentiviral particles.
+* **Induction:** Inducing transcription factor expression.
+* **Culture & Differentiation:** Sequentially culturing the cells in specialized media and supplements (e.g., NT3) to support neuronal differentiation and survival.
+* **Optimization Design:** Systematically varying selected parameters.
 
-## 5. Key Project Files
+## 5. Key Project Files (For All Tasks)
 
-* **`Experimental Protocol.pdf`**: Details the baseline protocol for differentiating fibroblasts into sensory neurons (adapted from Blanchard et al., Nature Neurosci 2015).
-* **`Experiment design template (1).xlsx - Sheet1.csv`**: The output/structure of the experimental design, outlining the conditions, variables, concentrations, and controls for the optimization experiment. (Note: This represents the plan laid out in the original Excel template).
-* **`Task 1_LifeArc_Glossary.pdf`**: A glossary defining key technical terms relevant to this project phase.
-* **`Further reading.pdf`**: A list of suggested background reading materials, including scientific reviews and technical notes.
+* **`Experimental Protocol.pdf`**: Details the baseline protocol.
+* **`Experiment design template (1).xlsx - Sheet1.csv`**: Output of the experimental design from Task 1.
+* **`Task 1_LifeArc_Glossary.pdf`, `Task 3_LifeArc_Glossary.pdf`**: Glossaries defining key technical terms.
+* **`Further reading.pdf`**: Suggested background reading materials.
+* **`Data analysis notebook.Rmd`**: R Markdown for Task 2 MAP2 data analysis.
+* **`Input data.txt`**: Data for Task 2.
+* **`NGN2_barplot_outlier_removed.png`**: Key visual output from Task 2.
+* **`Email_from_Ela.pdf`**: Colleague's follow-up data for Task 3.
 
-## 6. Status & Next Steps
+## 6. Status & Next Steps (Post-Task 1)
 
-* **Status:** The experimental design phase (Task 1) is complete. The optimization strategy, including variables, ranges, and controls, has been defined.
-* **Next Steps:**
-  * Execute the designed optimization experiment based on the plan.
-  * Collect data from multiple experimental readouts (to be defined in subsequent tasks).
-  * Analyze the results to identify the optimal differentiation conditions.
-  * Report the findings.
+* **Status:** The experimental design phase (Task 1) is complete.
+* **Next Steps (were):** Execute the experiment, collect data, analyze results.
 
-# Project 2: Analysis of MAP2 Immunofluorescence Data for Neuronal Differentiation Optimization
+---
+
+# Project 2: Analysis of MAP2 Immunofluorescence Data for Neuronal Differentiation Optimization (Task 2)
 
 ## 1. Project Overview
 
-This project focuses on analyzing the results of a neuronal differentiation optimization experiment. The primary goal is to identify the combination of treatments that yields the highest proportion of MAP2-positive cells, which serve as a marker for neuronal differentiation. The analysis involves data visualization and statistical modeling to determine the optimal experimental conditions.
+This project focused on analyzing the results of the neuronal differentiation optimization experiment designed in Task 1. The primary goal was to identify the combination of NGN2 virus dose and NT3 supplement that yields the highest proportion of MAP2-positive cells (mature neurons).
 
 ## 2. Background
 
-The differentiation of fibroblasts into neurons is a critical step in developing reliable *in vitro* models for neuroscience research. This project builds on the experimental design phase (Project 1) by analyzing the data generated from the optimization experiment. The experiment tested various doses of NGN2 virus and the NT3 supplement to evaluate their effects on neuronal differentiation efficiency.
-
-The experimental design included:
+The experiment tested:
 
 * Four doses of NGN2 virus (0, 2, 5, and 10 MOI).
 * Two NT3 supplement concentrations (0 and 10 ng/mL).
-* Three replicates per condition, resulting in 24 samples.
+* Three replicates per condition.
+MAP2 expression was the primary outcome.
 
-The proportion of MAP2-positive cells in each well was measured as the primary outcome.
+## 3. Current Task (Task 2): Data Analysis
 
-## 3. Current Task: Data Analysis (Task 2)
+This phase focused on:
 
-This phase focuses on analyzing the experimental data to:
+* Visualizing NGN2 and NT3 effects on MAP2 expression.
+* Identifying the treatment combination maximizing neuronal differentiation.
+* Performing statistical analysis (logistic regression).
 
-* Visualize the effects of NGN2 and NT3 on MAP2 expression.
-* Identify the treatment combination that maximizes neuronal differentiation efficiency.
-* Perform statistical analysis using logistic regression to formally test the effects of treatments.
+## 4. Methodology Employed (Task 2)
 
-## 4. Methodology Employed
+1. **Data Loading and Preprocessing:** Data loaded into R, treatment doses as categorical.
+2. **Data Visualization:** Bar plots for mean MAP2+ cells.
+3. **Statistical Analysis:** Logistic regression, outlier removal.
+4. **Optimization:** Optimal treatment identified.
 
-The analysis involves the following steps:
+## 5. Key Findings from Task 2
 
-1. **Data Loading and Preprocessing:**
-   * The experimental data is loaded into R and preprocessed to represent treatment doses as categorical variables.
+* The optimal NGN2 virus dose was determined to be **5 MOI**.
+* The addition of **NT3 supplement (10 ng/mL)** significantly increased the overall proportion of MAP2-positive mature neurons compared to no NT3, when combined with 5 MOI NGN2 (approx. 12% MAP2+ cells with NT3 vs. 8.5% MAP2+ cells without NT3).
+* The combination of **5 MOI NGN2 and 10 ng/mL NT3** was recommended for maximizing MAP2+ neuron yield.
 
-2. **Data Visualization:**
-   * Bar plots are generated to visualize the mean proportion of MAP2-positive cells for each treatment condition, with error bars representing standard deviations.
+## 6. Status & Next Steps (Post-Task 2)
 
-3. **Statistical Analysis:**
-   * Logistic regression is used to model the effects of NGN2 and NT3 on MAP2 expression.
-   * Interaction effects between NGN2 and NT3 are tested.
-   * Outlier removal is performed to ensure robust results.
+* **Status:** Data analysis for general neuronal maturation (MAP2 expression) complete. Optimal conditions for MAP2+ yield identified.
+* **Next Steps (were):** Further characterization for specific neuronal subtypes relevant to pain research (nociceptors).
 
-4. **Optimization:**
-   * The optimal treatment combination is identified based on the analysis results.
+---
 
-## 5. Key Project Files
+# Project 3: Synthesising Evidence for Functional Nociceptor Generation (Task 3)
 
-* **`Data analysis notebook.Rmd`**: The R Markdown file containing the analysis code and documentation.
-* **`Input data.txt`**: The raw experimental data file used for analysis.
-* **`Output plots and tables`**: Visualizations and summary tables generated during the analysis.
+## 1. Project Overview
 
-## 6. Status & Next Steps
+This project integrates the findings from Task 2 (MAP2 optimization) with new experimental data from a colleague (Ela) focusing on specific nociceptor markers (TRPA+) and functionality (Ca2+ response to mustard oil). The goal is to make a more informed decision about the use of NT3 supplement in the differentiation protocol for generating functional nociceptors.
 
-* **Status:** The data analysis phase (Task 2) is complete. The optimal treatment combination has been identified.
+## 2. Background
+
+While Task 2 showed that 10 ng/mL NT3 (with 5 MOI NGN2) increased the overall yield of MAP2+ mature neurons, MAP2 is a general neuronal marker. For pain research, the specific generation of functional nociceptors is crucial. Ela's experiments aimed to:
+
+* Assess the proportion of TRPA+ cells (a nociceptor marker) among MAP2-GFP+ neurons.
+* Measure the proportion of MAP2-GFP+ neurons showing a functional Ca2+ response to mustard oil (a nociceptor stimulant).
+Both tests were done comparing 0 ng/mL NT3 vs. 10 ng/mL NT3, using the optimal 5 MOI NGN2 dose.
+
+## 3. Current Task (Task 3): Synthesising Evidence and Collaboration
+
+This phase focused on:
+
+* Reviewing and interpreting Ela's TRPA+ expression and Ca2+ imaging data.
+* Comparing Ela's findings with the MAP2 expression results from Task 2.
+* Performing ballpark calculations to estimate the overall yield of TRPA+ and Ca2+ responsive cells relative to the total initial cell population under both NT3 conditions.
+* Formulating a recommendation on the use of NT3 based on the combined evidence.
+* Communicating these synthesized findings and recommendations to Ela.
+
+## 4. Methodology Employed (Task 3)
+
+1. **Comparative Analysis:** Ela's data (TRPA% and Ca2+ response % *within* MAP2-GFP+ cells) was compared with Task 2 data (overall MAP2+ yield).
+2. **Yield Estimation:** Ballpark calculations were made:
+    * `Overall Nociceptor Yield = (Task 2 MAP2+ % of total) * (Ela's Nociceptor-specific % within MAP2-GFP+)`
+3. **Decision Making:** The benefits of NT3 (higher total MAP2+ and potentially TRPA+ cells) were weighed against its drawbacks (significantly lower proportion of Ca2+ responsive cells within the MAP2+ population, leading to no net gain in total Ca2+ responsive cells).
+4. **Collaboration:** Findings and recommendations were structured for an email response to a colleague.
+
+## 5. Key Findings from Task 3 Integration
+
+* **TRPA+ Expression:**
+  * Ela's data showed a slight, but not statistically significant (p=0.107), increase in the proportion of TRPA+ cells among MAP2-GFP+ neurons with 10 ng/mL NT3 (39%) compared to 0 ng/mL NT3 (37%).
+  * Combined with Task 2's higher MAP2+ yield with NT3, the estimated *overall yield of TRPA+ cells from the total initial population was higher with NT3* (approx. 4.68% with NT3 vs. 3.15% without NT3).
+* **Ca2+ Response (Functionality):**
+  * Ela's data showed a statistically significant (p < 2.2e-16) *decrease* in the proportion of Ca2+ responsive cells among MAP2-GFP+ neurons with 10 ng/mL NT3 (22%) compared to 0 ng/mL NT3 (31%).
+  * Despite NT3 increasing the total MAP2+ neuron yield (Task 2), the *estimated overall yield of Ca2+ responsive cells from the total initial population was virtually identical* with or without NT3 (approx. 2.64%).
+* **Conclusion on NT3 Use:**
+  * NT3 increases the total number of MAP2+ neurons and appears to increase the absolute number of TRPA+ expressing cells.
+  * However, NT3 significantly reduces the *proportion* of functional (Ca2+ responsive) neurons within the MAP2+ population, resulting in no net gain in the absolute number of functionally responsive cells to mustard oil.
+  * This presents a trade-off: NT3 yields more cells expressing a nociceptor marker but does not improve, and may even compromise, the functional quality (in terms of Ca2+ response proportion) of the neuronal population generated.
+
+## 6. Status & Next Steps (Post-Task 3)
+
+* **Status:** Synthesis of MAP2, TRPA+, and Ca2+ response data is complete. A nuanced understanding of NT3's role has been achieved. Provisional recommendations have been formulated and communicated to the collaborator (Ela).
+* **Recommendation:** Based on the current data, if the primary goal is to maximize *functionally responsive nociceptors (Ca2+ assay)* as a proportion of differentiated neurons or to maintain a similar absolute number of functional cells without added cost/complexity, **omitting NT3 (0 ng/mL) with 5 MOI NGN2 appears to be a more favorable or equally effective condition.** If maximizing cells expressing the TRPA marker is prioritized, NT3 might be considered, but with the caveat of reduced functional responsiveness in the Ca2+ assay.
 * **Next Steps:**
-  * Validate the findings by repeating the experiment under the identified optimal conditions.
-  * Extend the analysis to include additional experimental readouts, such as cell viability or morphology.
-  * Report the findings in a scientific manuscript or presentation.
+  * Further discussion with the team (including Ela's presentation) to decide on the definitive NT3 strategy.
+  * Consideration of additional functional assays or markers to get a more comprehensive understanding of nociceptor "quality" under both NT3 conditions.
+  * Investigate the *magnitude or characteristics* of the Ca2+ response, not just the percentage of responding cells.
+  * Proceed with the chosen optimized protocol (5 MOI NGN2, and a decision on NT3) for generating nociceptors for compound screening.

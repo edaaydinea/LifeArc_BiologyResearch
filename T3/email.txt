@@ -1,0 +1,50 @@
+Hi Ela,
+
+Thanks so much for sharing your follow-up results and for the clear plots!  It’s really helpful to see the more specific nociceptor data to complement the MAP2 findings. I’ve been looking over them and comparing with my Task 2 data.
+
+Here’s a quick summary of how I see it:
+
+**Key Takeaways:**
+
+- **My Task 2 Data:** We saw that at 5 MOI NGN2, adding 10ng NT3 increased the overall proportion of MAP2+ mature neurons from about 8.5% to 12% of total cells.
+- **Your TRPA+ Data:** You found that the proportion of TRPA+ cells *among your MAP2-GFP+ population* was around 37% without NT3 and 39% with NT3. As you noted, the p-value (0.107) suggests this difference isn't statistically significant.
+- **Your Ca2+ Response Data:** This is quite interesting! You saw that ~31% of MAP2-GFP+ cells were responsive to mustard oil without NT3, but this dropped significantly to ~22% with NT3 (p < 2.2e-16).
+
+**Combining Our Findings (Ballpark Estimates for overall yield from total cells):**
+
+I did some rough calculations to see what this means for the overall yield of specific/functional nociceptors from the initial cell population:
+
+1. **Yield of TRPA+ cells (of total):**
+    - Without NT3 (0ng): ~8.5% (MAP2+) * 37% (TRPA+/MAP2+) = **~3.15%**
+    - With NT3 (10ng): ~12% (MAP2+) * 39% (TRPA+/MAP2+) = **~4.68%**
+    So, it looks like NT3 might give us a higher absolute number of TRPA+ expressing cells, mainly because it boosts the total MAP2+ population.
+2. **Yield of Ca2+ responsive cells (of total):**
+    - Without NT3 (0ng): ~8.5% (MAP2+) * 31% (Ca2+ resp/MAP2+) = **~2.64%**
+    - With NT3 (10ng): ~12% (MAP2+) * 22% (Ca2+ resp/MAP2+) = **~2.64%**
+    Despite NT3 increasing the total MAP2+ cells, the significant drop in the *proportion* of functional Ca2+ responders means the overall yield of these functionally defined nociceptors seems to be pretty much the same with or without NT3.
+
+**Thoughts on Using NT3 Going Forward:**
+
+This definitely adds complexity!
+
+- If the primary goal is to maximize the *number of TRPA-expressing cells*, then NT3 seems beneficial.
+- However, if the key outcome is *functional nociceptors* (defined by Ca2+ response to mustard oil), NT3 doesn't seem to offer an advantage in terms of *total yield* of responsive cells, and it actually *reduces the proportion* of responsive cells within the mature neuron population.
+
+This makes me wonder:
+
+- Is there a downside to having a larger population of MAP2+ neurons that are *less* functionally responsive to our key stimulus? Could this affect the sensitivity or clarity of downstream screening assays?
+- Could the *magnitude or quality* of the Ca2+ response be different between the NT3 conditions, even if the percentage of responding cells is lower with NT3? Your plots show the percentage of responders, but not necessarily the intensity or duration of the response.
+
+**Provisional Conclusion & Suggestion:**
+
+Based purely on maximizing the yield of *functionally Ca2+ responsive cells as a percentage of the differentiated neurons*, it seems like **omitting NT3 might be better** (31% vs 22% responsive among MAP2+ cells). And given that the *overall yield of functional cells from the starting population appears similar*, the added complexity/cost of NT3 might not be justified if Ca2+ responsivity is our primary functional endpoint.
+
+However, if the slightly higher number of TRPA+ cells with NT3 is important for other reasons, or if there are other functional aspects we haven't measured yet that NT3 might improve, the decision is tougher.
+
+Perhaps for your presentation, we could highlight this trade-off? It might be worth discussing if we should also look at other functional readouts or nociceptor markers that NT3 might be influencing differently. We could also consider if the specific population of MAP2+ neurons generated with NT3, even if less responsive to mustard oil, has other desirable characteristics (e.g., survival, other receptor expression).
+
+What are your thoughts? Happy to chat more about this before your presentation.
+
+Best,
+
+[Your Name]
