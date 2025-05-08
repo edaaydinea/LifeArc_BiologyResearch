@@ -1,0 +1,542 @@
+---
+title: 'LifeArc virtual work experience: Analysis of MAP2 immunofluorescence data
+  for the neuronal differentiation optimisation experiment'
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+editor_options:
+  markdown:
+    wrap: sentence
+---
+
+#### **1. Summary of the analysis task**
+
+Given an input table listing the proportion of cells expressing a neuronal marker MAP2 for each combination of treatments (a dose of NGN2 virus +/- NT3 supplement; 3 replicates per condition), select the treatment combination that yields the highest proportion of MAP2-expressing cells (i.e., neurons).
+
+We will use data visualisations and a formal statistical analysis by logistic regression to decide on the best treatment combination.
+
+#### **2. Getting started**
+
+Welcome to the R notebook that will guide you through your data analysis task.
+Whether you are an R aficionado or it is the first time using it, we hope that you will find this analysis feasible, enjoyable and educational.
+
+-   For those new to R notebooks, please note how the code is organised in "chunks" surrounded by free text. Please execute the code in each chunk of the code in turn by pressing on the green arrow at its top right corner. The output (either text or graphics) will appear immediately underneath the chunk.
+-   In some chunks, there will be bits of code that you will need to modify. Don't worry if you've never used R before - we'll give you detailed explanations beforehand.
+
+We'll start by installing several external packages (also known as libraries) that we will need for this analysis.
+This should only be run once - after this we recommend that you comment out these lines by adding the "\#" sign to each of them.
+
+```{r}
+
+#install.packages("effects")
+#install.packages("dplyr")
+#install.packages("ggplot2")
+
+```
+
+Now that these libraries are installed, we need to load them.
+This will need to be done every time.
+
+```{r message=FALSE}
+
+library(dplyr)
+library(ggplot2)
+library(effects)
+
+```
+
+#### **3. Load the data**
+
+The input data table contains the proportion of MAP2-positive cells in each well of our multiplexed experiment (in the "*fractMAP2"* column).
+The experimental conditions in each well - the concentrations of the NGN2 and control viruses (in MOI), and the amount of the NT3 supplement - are recorded in the *NGN2_MOI, CONTROL_MOI* and *NT3_ng* columns, respectively.
+
+Let's load our dataset using the *read.table()* function.
+
+| **Replace the path in quotes with the path to the input data file on your machine**
+
+-   Note that "\<-" is a **variable assignment** operator in R, so the table will be saved in a new variable called *data*.
+
+```{r}
+
+data <- read.table("Input data.txt", sep='\t', header=TRUE)
+
+```
+
+Let's print out the data as a table to have a look.
+
+```{r}
+
+data
+```
+
+As you can see, this experimental design tests four doses of the NGN2 virus (0, 2, 5 and 10 MOI), using 5 MOI of the empty virus vector as a negative control in the wells where no NGN2 virus was added.
+In addition, for each dose of the NGN2 virus, the effects of the NT3 supplement were tested at 0 and 10 ng/mL.
+There are eight experimental conditions, with each condition replicated over three wells, giving 24 samples overall (one 24-well plate).
+
+-   Note that our experimental design is not really appropriate to assess the effect of the empty vector control itself on the outcome (*can you see why?*), so we will disregard the *CONTROL_MOI* column in our analysis.
+
+#### **4. Represent treatment doses as categorical data**
+
+Currently, our treatment doses are represented as numbers.
+However, we don't necessarily expect the doses to show a consistent trend with respect to the outcome (i.e., it is possible that both "too much" and "not enough" of the virus will impair differentiation efficiency).
+It may therefore more appropriate in our setting to treat each dose as a separate "**category**", in the same way as we would typically encode colours or genders.
+(Note that categorical encoding does not mean that the underlying data must be inherently discrete!).
+
+To tell R that our treatment doses should be considered as categorical data, we need to transform the corresponding columns from the numerical into the so-called **factor** format.
+We will define the "**levels**" of each factor such that the dose of 0 will be considered as a "control", with the following levels corresponding to increasing doses.
+This will help us in data visualisation and regression analysis further down below.
+
+-   Note how the "\$" operator in R allows us to access specific columns in a table by their names.
+
+```{r}
+
+data$NGN2_MOI <- factor(data$NGN2_MOI, levels=c(0,2,5,10))
+data$NT3_ng <- factor(data$NT3_ng, levels=c(0,10))
+
+```
+
+We will print just the top bit of the modified table now using the *head()* function.
+
+```{r}
+
+head(data)
+
+```
+
+| **Question:** Can you see what has changed in the output?
+| 
+| 
+| 
+
+[Answer:]{.underline} \*\* When you print the head of the data table again using head(data), you will notice that the NGN2_MOI and NT3_ng columns are no longer represented as simple numbers (numeric type). Instead, R will indicate that they are factors. For example, the output might show the levels for these factors (e.g., Levels: 0 2 5 10 for NGN2_MOI). This change signifies that R now treats these variables as categorical, meaning it understands them as distinct groups or categories rather than continuous numerical values. This is crucial for the subsequent plotting and regression analysis, as R will handle them differently (e.g., by creating separate groups in plots or dummy variables in models). \*\*.
+
+
+#### **5. Plot the data**
+
+Let's now generate a bar plot the data.
+We will construct the plot such that the heights of the bars show the mean fraction of MAP2-positive cells for each treatment condition, and the error bars showing standard deviations across the three replicates.
+
+To do this, we will first generate a summary table with **conditions** in rows (8 in total), and the **means** and **standard deviations** across replicates in columns.
+We will call the columns *meanFractMAP2* and *sdFractMAP2*, respectively.
+
+We will use the *group_by()* and *summarise()* functions from the *dplyr* package as below.
+
+-   The column name(s) supplied to *group_by()* tell this function that the rows in which the values across all of these columns are identical should be considered a single group. In our case, a single group will be all rows with the same doses of the NGN2 virus and NT3 supplement - in other words, all replicates of the same treatment condition.
+-   *summarise()* will create a table with one row per group, where each column will correspond to some summary function applied to each group (in our case, the mean and standard deviation (*sd*) of the fractMAP column).
+-   *%\>%* is a pipe operator used in some R packages, which works by "forwarding" the data from the left side of the operator to a function on the right side of it. This avoids the need to assign intermediate results of multiple operations to separate variables and makes the code tidier and more readable.
+
+```{r}
+
+sumdata <- data %>% 
+  group_by(NGN2_MOI, NT3_ng) %>%
+  summarise(meanFractMAP2=mean(fractMAP2), sdFractMAP2 = sd(fractMAP2))
+
+```
+
+We can now visualise the data from the summary table as a barplot.
+We will use the powerful *ggplot2* package for this.
+
+You don't need to understand each parameter in the code below, but note how the plot is "assembled" from a "**sum**" of different function calls:
+
+-   *ggplot()* defines what table should be used as **input** (in our case, *sumdata*) and which of its columns should be used for the plotting and how.
+    Here we will ask it to plot the fraction of MAP2+ cells (*meanFractMAP2*) along the **y** axis, plot the bars for different concentrations of the NGN2 virus (*NGN2_MOI*) along the **x** axis, and use different **fill colour** for the conditions with and without NT3 (*NT3_ng*).
+
+-   *geom_bar()* determines that these data should be plotted as a **barplot** (i.e., with the **y** axis reflecting the height of the bars).
+    The *position_dodge()* call inside this function determines that the two barplots for the same virus concentration (with and without NT3, respectively) should be plotted next to each other (rather than stacked).
+
+-   *geom_errorbar()* determines how the **error bars** should be plotted.
+    Here we define that the bottom and the top boundaries of the error bars should correspond to the *(mean+/-standard deviation)* for each condition, respectively.
+
+```{r}
+
+ggplot(sumdata, aes(x=NGN2_MOI, y=meanFractMAP2, fill=NT3_ng)) +
+  geom_bar(position=position_dodge(), stat="identity", colour='black') +
+  geom_errorbar(aes(ymin=meanFractMAP2-sdFractMAP2, ymax=meanFractMAP2+sdFractMAP2), 
+                width=0.2, position=position_dodge(0.9))
+
+```
+
+Let's now try replotting the data by [averaging across NT3-treated and untreated wells]{.underline}.
+This way we will only have **four bars** in the bar plot, one per each NGN2 virus dose.
+
+First, we will create a different summary table for this, where we will group the data differently.
+
+| **Can you have a go at the correct parameter for this *group_by()* function in this case?**
+
+```{r}
+
+sumdataNGN2 <- data %>%
+  group_by(NGN2_MOI) %>% # Group only by NGN2_MOI
+  summarise(meanFracMAP2=mean(fractMAP2), sdFracMAP2 = sd(fractMAP2)) # [cite: 1]
+
+```
+
+The rest of the code is ready to go (note that we've removed the *fill* parameter from *ggplot()* as with just one parameter to plot - NGN2 virus dose - we no longer need to use the fill colour to represent the second condition).
+
+```{r}
+
+ggplot(sumdataNGN2, aes(x=NGN2_MOI, y=meanFracMAP2)) +
+  geom_bar(stat="identity") +
+  geom_errorbar(aes(ymin=meanFracMAP2-sdFracMAP2, ymax=meanFracMAP2+sdFracMAP2))
+
+```
+
+Let's now do the same by averaging across all NGN2 doses, such that we only have **two bars** in the bar plot, one per each NT3 dose (treated and untreated).
+
+| **Please insert the correct grouping into *group_by()* for this visualisation.**
+
+```{r}
+
+sumdataNT3 <- data %>% # Renamed to sumdataNT3 for clarity, though the notebook reuses sumdataNGN2
+  group_by(NT3_ng) %>% # Group only by NT3_ng
+  summarise(meanFracMAP2=mean(fractMAP2), sdFracMAP2 = sd(fractMAP2))
+
+ggplot(sumdataNT3, aes(x=NT3_ng, y=meanFracMAP2)) +
+  geom_bar(stat="identity") +
+  geom_errorbar(aes(ymin=meanFracMAP2-sdFracMAP2, ymax=meanFracMAP2+sdFracMAP2), width=0.2,
+                position=position_dodge(0.9)) # [cite: 1]
+
+```
+
+| **Question**: Look at the error bars in the plot above. 
+  What do you notice and how would you interpret this result?
+| 
+| 
+| 
+
+[Answer]{.underline}: \*\* When you look at the bar plot showing the effect of NT3 (averaged across NGN2 doses), you will likely notice that the error bars for the two conditions (NT3 at 0 ng/mL and NT3 at 10 ng/mL) might be of different sizes.    
+
+- One error bar might be noticeably larger than the other, or both might be relatively large compared to the mean values.
+- Interpretation:
+  - Variability: The size of the error bars (representing standard deviations) indicates the variability in the fraction of MAP2-positive cells within that NT3 treatment group (when averaged across different NGN2 doses). A larger error bar means there's more scatter or inconsistency in the results for that NT3 condition across the different NGN2 virus concentrations it was combined with, or across the replicates for those combinations.
+  - Significance of NT3 effect: If the error bars are large and overlap substantially, it might suggest that the overall effect of NT3 (when NGN2 effects are averaged out) is not very consistent or strong. If the means of the two NT3 conditions are close and the error bars overlap significantly, it could indicate that, on average, NT3 might not have a clear, strong, independent effect on MAP2 expression when considering all NGN2 doses together. Conversely, if the error bars are small and do not overlap, and there's a clear difference in bar height, it would suggest a more consistent effect of NT3. \*\*.
+
+#### **6\*. Formally test the effects of treatment doses on differentiation efficiency**
+
+-   This part is a bit more advanced than what we have been doing so far. If getting to this point took you quite a bit of time already, you may consider skipping this section and heading straight to section 7.
+
+From the plots above, we can probably have some idea already of what combination of treatment doses has worked best, and which treatment had a larger effect.
+However, we still need to test this formally.
+
+Importantly, the outcomes that we are comparing are given by **proportions** (of MAP2-positive cells), and proportions [are not distributed normally]{.underline}.
+Therefore, we shouldn't use standard significance tests such as the T test or ANOVA for this analysis.
+
+In addition, we have [many conditions]{.underline}, so rather than doing lots of pairwise comparisons (and accumulating multiple testing errors), we are going to [tie them all together into a regression model]{.underline}.
+
+When the outcome is given by a proportion, one suitable regression framework is **logistic regression**.
+Formally, logistic regression is a type of generalised linear models of the form:
+
+**f(y) = k~1~x~1~ + k~2~x~2~ + ... + b**
+
+-   **y** is a binary outcome variable (such as "pass"/"fail" or "heads"/"tails");
+
+-   **f(y)** is typically the log-odds of success: *f(y)* = *logit(y) = log(y/1-y)*;
+
+-   **x~1~**, **x~2~**, ... are explanatory (predictor) variables;
+
+-   **k~1~**, **k~1~**, ... are the regression coefficients to be determined by the regression analysis;
+
+-   **b** is the intercept term that affects the outcome uniformly and does not depend on the predictor variables.
+
+Regression analysis can be used to assess which (if any) explanatory variables (in our case, the two treatments we have varied) affect the chances of a positive outcome (in our case, the fraction of MAP2-expressing cells generated in the differentiation experiment).
+
+-   Note: The explanatory variables can be either continuous or categorical (as in our case, as we are using treatment doses as categorical variables for reasons explained above).
+
+-   Also note that in our case instead of single outcomes for each observation (which would be: "Is a given cell MAP2-positive?"), we will use the **fraction of MAP2-positive cells per well** as the outcome variable.
+
+One key additional piece of information that we need for this analysis is the **total number of cells scanned in each well**.
+
+| *The input file you are given doesn't provide this information, so you had to check with the colleague who has performed this experiment. She told you that the data are based on roughly **10,000 cells** scanned in each well**.***
+
+We will now use R to fit our logistic regression model using the *glm()* function, which has the following key parameters:
+
+-   *data -* our input table as the *data* parameter
+
+-   *family* - the type of the generalised regression model (for logistic regression, it should be set to "binomial")
+
+-   the model *formula* in the form *y \~ x1 + ... + xN*.
+
+The measurements of both the outcome variable **y** and all explanatory variables **x~1~**, ..., **x~N~** should be provided in the input data table [under the corresponding column names]{.underline}.
+
+-   [For example]{.underline}, if we are assessing the relationship between the chance of getting heads in a coin flip and the temperature and humidity in the room, the model formula could be: *isHeads \~ temp + humidity*, assuming the input data table has the relevant information encoded in the columns named "isHeads", "temp" and "humidity".
+
+| **Please think of the outcome variable and explanatory variables in our model and input them into the formula below.**
+
+```{r}
+
+mod = glm(fractMAP2 ~ NGN2_MOI + NT3_ng, family=binomial(link="logit"), data=data,
+          weights = rep(10000,nrow(data))) # [cite: 1]
+
+```
+
+-   Note how we have entered the number of cells tested in each row as the *weights* parameter.
+    In our case, they are the same for each well, so we are just repeating the same number for each row, but they could also be different.
+
+-   Also note that in this model we are assuming that the effects of virus concentration and NT3 treatment are fully independent.
+    If we aren't sure about it, it may make sense to test their **interaction effects** as well.
+    If you are interested, you can read up on how to do this in R very straightforwardly - for example, here: <https://www.theanalysisfactor.com/generalized-linear-models-glm-r-part4/>.
+    Feel free to try this analysis in a separate chunk below.
+
+Let's now inspect the summary of this model generated by R.
+
+```{r}
+
+summary(mod) 
+
+```
+
+This command prints a few things, but we will focus on the following:
+
+-   The **values** of each regression coefficient given in the *Estimate* column.
+
+    For our purposes, it is sufficient to know that the sign of the regression coefficient corresponds to whether inreasing the value of the predictor results in either increasing (+) or decreasing (-) the chances of success (in our case, on MAP2 expression).
+
+    Also, the higher is the absolute value of the coefficient, the stronger is the effect of the predictor on the chances of success.
+
+    -   If you'd like to learn more about interpreting logistic regression coefficients, you can check, for example, this page for details: <https://stats.oarc.ucla.edu/r/dae/logit-regression/>.
+
+-   The **significance** of the coefficients' difference from zero (with a coefficient of zero corresponding to the predictor not affecting the outcome).
+    The p-values for this significance are given in the *Pr(\>\|z\|)* column.
+
+-   You have also probably noticed that the names of explanatory variables listed in the summary have changed a little from what we have provided originally.
+    This is because for categorical variables defined this way, R is testing **the effect of each level separately** compared with the first one.
+    This way, each treatment level becomes a separate independent explanatory variable, which R names by adding the treatment level (in our case, concentration) to the original variable name.
+
+    -   If you are interested in more details about regression analysis with categorical predictor variables, you can refer, e.g., to this page: <http://www.sthda.com/english/articles/40-regression-analysis/163-regression-with-categorical-variables-dummy-coding-essentials-in-r/>.
+
+We can now **plot the predictions** of this model by using just one line of code in R.
+
+```{r}
+
+plot(allEffects(mod))
+```
+
+| **Questions:**
+| - What treatments/doses have a **significant** effect on the outcome compared with the no-treatment control?
+| 
+| 
+| 
+
+[Answer:]{.underline} \*\* 
+To answer this, you need to look at the Pr(>|z|) column in the output of summary(mod).  A p-value less than a chosen significance level (commonly 0.05) indicates a significant effect.   
+
+- NGN2_MOI levels: The summary will show coefficients for NGN2_MOI2, NGN2_MOI5, and NGN2_MOI10. These represent the effect of 2 MOI, 5 MOI, and 10 MOI compared to the reference level (0 MOI, the no-NGN2-treatment control). Identify which of these have p-values < 0.05.
+- NT3_ng level: The summary will show a coefficient for NT3_ng10. This represents the effect of 10 ng/mL NT3 compared to the reference level (0 ng/mL NT3, the no-NT3-treatment control). Check if its p-value is < 0.05. \*\*.
+
+| - What treatment/dose has the **strongest** **positve** effect on the outcome compared with the control?
+| 
+| 
+| 
+
+[Answer:]{.underline} \*\* 
+Look at the Estimate column in the summary(mod) output.    
+
+- A positive estimate means the treatment/dose increases the log-odds of MAP2 expression compared to its respective control.
+- The strongest positive effect corresponds to the largest positive Estimate value among the significant ones. Compare the significant positive estimates for NGN2_MOI2, NGN2_MOI5, NGN2_MOI10, and NT3_ng10 (if significant and positive).
+
+ \*\*.
+
+Finally, as you may remember, the regression coefficients and their significance are reported [with respect to the no-treatment controls]{.underline}.
+In the case of NGN2 virus, they clearly show that using the virus works better than not doing it.
+But is the **difference between the various doses of the virus** significant?
+
+The most straightforward way to test this is to swap the control dose of the virus against which we are testing from 0 MOI to the best-working dose: 5 MOI (that is currently level 3).
+Do other doses doses perform *significantly* worse?
+
+We will use the *relevel()* function to do this, rerun regression analysis, and then return the levels back to the original order.
+
+| **Please insert the model formula into the glm function (it didn't change from the analyses above)**
+
+```{r}
+
+levels(data$NGN2_MOI) # the original level order
+data$NGN2_MOI = relevel(data$NGN2_MOI, ref=3) 
+levels(data$NGN2_MOI) # the new level order
+
+mod3 = glm(fractMAP2 ~ NGN2_MOI + NT3_ng, family=binomial(link="logit"), data=data,
+          weights = rep(10000,nrow(data))) # [cite: 1]
+
+summary(mod3)
+
+# Restore the original order - note that relevel() won't work as it will put 5 before 2 
+data$NGN2_MOI = factor(data$NGN2_MOI, levels = c("0", "2", "5", "10"))
+levels(data$NGN2_MOI) # back to how they were originally
+
+```
+
+| **Question:** Did 5 MOI of the NGN2 virus perform significantly better than 2 and 10 MOI?
+| 
+| 
+| 
+
+[Answer:]{.underline} \*\* 
+After releveling NGN2_MOI so that 5 MOI is the reference, the summary(mod3) output will show coefficients for NGN2_MOI0, NGN2_MOI2, and NGN2_MOI10.  These now represent the effect of 0 MOI, 2 MOI, and 10 MOI compared to 5 MOI.   
+
+- To see if 5 MOI performed significantly better than 2 MOI, look at the coefficient for NGN2_MOI2. A significant negative coefficient (p-value < 0.05 and a negative Estimate) would mean that 2 MOI is significantly worse than 5 MOI (i.e., 5 MOI is better).
+- Similarly, for 10 MOI, look at the coefficient for NGN2_MOI10. A significant negative coefficient would mean that 10 MOI is significantly worse than 5 MOI. If the p-values for NGN2_MOI2 or NGN2_MOI10 are not significant, or if the estimates are not negative, then 5 MOI did not perform significantly better.
+ \*\*.
+
+#### **7. Outlier removal**
+
+Let's have another look at the very first plot.
+Did you notice that one treatment condition has a surprisingly large standard deviation (almost equal to the mean).
+
+| **Question**: Can you see what condition it is?
+| 
+| 
+| 
+
+[Answer]{.underline}: \*\* 
+By examining the very first bar plot (plotting meanFractMAP2 with NGN2_MOI on the x-axis and NT3_ng as fill), you need to identify the bar that has an unusually large error bar. Note down the NGN2_MOI and NT3_ng combination for this bar. Then, look at your original data table or the sumdata table to pinpoint this condition.
+Looking at the Input data.txt file, the values for NGN2_MOI = 2.0 and NT3_ng = 10 are 0.001, 0.022, and 0.019. The value 0.001 is much lower than the other two. This is row 10 in the Input data.txt file (SampleID 10). 
+The condition is NGN2_MOI = 2.0, NT3_ng = 10.
+ \*\*.
+
+If you locate this condition in the experimental table, you'll see that it's likely to do with one of the three replicates for this condition being a "dropout", in which either the differentiation or the immunostaining hasn't really worked for some technical reasons.
+
+Let's **remove this dropout replicate** and rerun the analysis.
+For this, we will locate the row in the original table corresponding to this replicate and create a new data table with this row filtered out.
+
+| **Enter the correct row instead of ROW_NUMBER below.**
+
+```{r}
+
+dataFilt = data[-10,] # Removes the 10th row from the data frame [cite: 1]
+
+```
+
+We can now rerun the analysis.
+
+First, let's **regenerate the summary table** and **replot** **the data**.
+You can see that the error bar for the affected condition is now much smaller.
+
+```{r}
+
+sumdataFilt <- dataFilt %>% 
+  group_by(NGN2_MOI, NT3_ng) %>%
+  summarise(meanFractMAP2=mean(fractMAP2), sdFractMAP2 = sd(fractMAP2))
+
+ggplot(sumdataFilt, aes(x=NGN2_MOI, y=meanFractMAP2, fill=NT3_ng)) +
+  geom_bar(position=position_dodge(), stat="identity", colour='black') +
+  geom_errorbar(aes(ymin=meanFractMAP2-sdFractMAP2, ymax=meanFractMAP2+sdFractMAP2), 
+                width=0.2,position=position_dodge(0.9))
+
+
+```
+
+-   If you skipped section 6, skip the remainder of this section and proceed to section 8.
+
+Let's **rerun the logistic regression model** and compare the results with those run on unfiltered data.
+
+| **Enter the model formula in the glm() function below.**
+
+```{r}
+
+mod2 = glm(fractMAP2 ~ NGN2_MOI + NT3_ng, family=binomial(link="logit"), data=dataFilt,
+           weights = rep(10000,nrow(dataFilt))) # [cite: 1]
+
+message("With the outlier:")
+summary(mod)
+
+message("Without the outlier:")
+summary(mod2) 
+
+```
+
+And let's now do the same using 5 MOI of NGN2 virus as reference.
+
+| **Enter the model formula in the glm() function call below.**
+
+```{r}
+
+levels(dataFilt$NGN2_MOI) # the original level order
+dataFilt$NGN2_MOI = relevel(dataFilt$NGN2_MOI, ref=3) 
+levels(dataFilt$NGN2_MOI) # the new level order
+
+modFilt5MOI = glm(fractMAP2 ~ NGN2_MOI + NT3_ng, family=binomial(link="logit"),
+                   data=dataFilt, weights = rep(10000,nrow(dataFilt))) # [cite: 1]
+
+message("With the outlier")
+summary(mod3)
+
+message("Without the outlier")
+summary(modFilt5MOI)
+
+# Restore the original order - note that relevel() won't work as it will put 5 before 2 
+dataFilt$NGN2_MOI = factor(dataFilt$NGN2_MOI, levels = c("0", "2", "5", "10"))
+levels(dataFilt$NGN2_MOI) # back to how they were originally
+
+```
+
+| **Questions:**
+| - What regression coefficients have changed?
+| 
+| 
+
+[Answer]{.underline}: \*\* 
+Compare the Estimate, Std. Error, and Pr(>|z|) values from summary(mod) (with outlier) and summary(mod2) (without outlier). Also, compare summary(mod3) and summary(modFilt5MOI). 
+You will likely see changes in:   
+
+- Estimates: The magnitude of the coefficients might change. Specifically, the coefficient for NGN2_MOI2 (when 0 MOI is the reference) and any coefficients involving the NT3 interaction with 2 MOI NGN2 (if you were testing interactions) would be most affected. The effect of NT3_ng10 might also change if the outlier was influencing its overall estimated effect.
+- Standard Errors: These might decrease for the affected coefficients, indicating more precision in the estimate once the influential outlier is removed.
+- P-values: Consequently, the significance of some effects might change. An effect that was non-significant might become significant, or vice-versa, particularly for the condition where the outlier was present (NGN2 at 2 MOI, especially with NT3).
+
+\*\*.
+
+| - Has the apparent optimal experimental condition changed after removing the outlier (and if so, how)?
+| 
+| 
+
+[Answer]{.underline}: \*\* 
+The removal of the outlier (which was an unusually low value for the NGN2 2 MOI + NT3 10 ng/mL condition) will likely increase the mean fractMAP2 for that specific condition.    
+
+- Before outlier removal: The condition NGN2 2 MOI + NT3 10 ng/mL might have appeared poor due to the outlier.
+- After outlier removal: This condition will now show a higher mean fractMAP2. Whether this changes the overall optimal condition depends on how this revised value compares to other high-performing conditions (like NGN2 5 MOI, with or without NT3). Look at the new bar plot generated with dataFilt.  Compare the heights of the bars. Also, re-examine the logistic regression output (summary(mod2) and summary(modFilt5MOI)).  The optimal condition is the one that consistently shows the highest MAP2 expression and is statistically robust. The removal of the outlier might make the NGN2 2 MOI + NT3 10 ng/mL condition appear more favorable than it did before, potentially making it a stronger contender or even changing which condition appears best if it was previously very close to another. However, it's expected that NGN2 5 MOI conditions will still be very strong. 
+ \*\*.
+
+#### **8. Final conclusions**
+
+And we are done.
+It's time for your verdict!
+
+| **Question:** Based on the analyses above, what combination of treatment doses do you recommend to use in the differentiation protocol?
+| 
+| 
+
+[Answer:]{.underline} \*\* 
+To answer this definitively, you need to synthesize all the information:
+1. Visualizations (Bar Plots, especially after outlier removal): Which condition consistently shows the highest mean fractMAP2?  The plot with sumdataFilt will be key here.   
+2. Logistic Regression (after outlier removal - summary(mod2) and summary(modFilt5MOI)):
+   1. Which NGN2 dose (NGN2_MOI2, NGN2_MOI5, NGN2_MOI10) shows the largest, significant positive estimate compared to no NGN2?    
+   2. Does NT3 (NT3_ng10) have a significant positive effect?    
+   3. When 5 MOI NGN2 is the reference (summary(modFilt5MOI)), are other NGN2 doses significantly worse? This helps confirm if 5 MOI is indeed superior or if other doses are statistically similar to it.    
+
+General Expectation & How to Decide:
+
+* Typically, a higher dose of NGN2 (like 5 MOI) is expected to perform well.
+* The NT3 supplement is also generally expected to have a positive effect.
+* The optimal condition will likely be a combination that shows:
+  * A high bar in the final bar plot.
+  * Significant positive coefficients in the logistic regression.
+  * If NGN2 at 5 MOI is chosen, it should ideally be significantly better than, or at least not significantly worse than (and practically better than), other NGN2 doses.
+  * The presence of NT3 should ideally add to this effect if its coefficient is significant and positive.
+
+Based on typical results for such experiments and the data structure (where 5 MOI NGN2 tends to show high values, and NT3 often enhances it):
+The most likely recommendation would be NGN2 at 5 MOI in combination with NT3 at 10 ng/mL, especially after the outlier that artificially lowered the performance of one of the NT3-treated conditions is removed. 
+
+You need to confirm this by looking at your specific R output from ggplot(sumdataFilt, ...) and summary(mod2) / summary(modFilt5MOI). The condition with the highest meanFractMAP2 in sumdataFilt that is also supported by the regression (e.g., significant positive coefficients for its components) would be the recommended one. For example, if NGN2_MOI5 has the highest positive estimate and NT3_ng10 also has a significant positive estimate, then NGN2 5 MOI + NT3 10 ng/mL is a strong candidate.
+ \*\*.
+
+#### **9. Reporting the results**
+
+We will now save this notebook in a human-readable format (in our case, as an HTML page).
+For R notebooks, this process is called "knitting" it, and so we will click the "Knit" button at the top of this window to generate our HTML report.
+
+-   **Important notes**:
+    -   The first chunk of code (where we were installing new packages) should be commented out (by prepending each line with '\#') for the knitting to work.
+
+    -   If you skipped the logistic regression analysis parts, you also need to comment out (or delete) code chunks 12-15, 18 and 19.
+        You can locate them quickly in the dropdown menu on the bottom right of this window.
+
+-   Also note that Rstudio will likely ask you to download additional packages if it is your first time knitting a notebook into an HTML report.
