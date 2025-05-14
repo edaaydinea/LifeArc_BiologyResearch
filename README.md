@@ -144,6 +144,7 @@ This phase focused on:
   * Investigate the *magnitude or characteristics* of the Ca2+ response, not just the percentage of responding cells.
   * Proceed with the chosen optimized protocol (5 MOI NGN2, and a decision on NT3) for generating nociceptors for compound screening.
 
+---
 
 # Project 4: Results Presentation and Strategic Recommendations (Task 4)
 
